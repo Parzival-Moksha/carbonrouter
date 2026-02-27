@@ -342,7 +342,7 @@ export default function RadarView({ intakeTraits = {} }) {
       <div style={{ textAlign: "center", marginBottom: 24 }}>
         <div style={{ fontSize: 9, letterSpacing: 6, color: "#444", marginBottom: 8 }}>HUMAN ROUTING LAYER</div>
         <div style={{ fontSize: 22, fontWeight: 300, letterSpacing: 3, color: "#fff" }}>TRAIT RADAR</div>
-        <div style={{ fontSize: 10, color: "#555", marginTop: 6 }}>drag nodes to reshape your polygon · v0.0.3</div>
+        <div style={{ fontSize: 10, color: "#555", marginTop: 6 }}>drag nodes to reshape your polygon · v0.0.4</div>
         {hasIntakeData ? (
           <div style={{ fontSize: 9, color: "#00ff88", marginTop: 8, letterSpacing: 2 }}>
             ⚡ SYNCED FROM INTAKE — {Object.keys(intakeTraits).length}/10 traits loaded
@@ -536,8 +536,8 @@ export default function RadarView({ intakeTraits = {} }) {
           ∙∙·▫▫ᵒᴼᵒ▫ₒₒ▫ᵒᴼᵒ▫▫·∙∙
         </div>
         <div style={{ fontSize: 9, color: "#444", letterSpacing: 1.5, lineHeight: 2 }}>
-          HUMAN ROUTING LAYER · PREFERENCES FILE v0.0.3<br />
-          next → embed semantic layer → real matching → ship to alex
+          HUMAN ROUTING LAYER · PREFERENCES FILE v0.0.4<br />
+          next → real matching (50 users) → ship to alex
         </div>
         <div style={{ fontSize: 8, color: "#333", letterSpacing: 2, marginTop: 8 }}>
           ∙∙·▫▫ᵒᴼᵒ▫ₒₒ▫ᵒᴼᵒ▫▫·∙∙

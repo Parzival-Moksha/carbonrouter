@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { checkHealth, saveProfile } from "../api.js";
 
 const LAYERS = {
   0: { name: "HARD CONSTRAINTS", icon: "⚡", color: "#ff3366", desc: "Dealbreakers. Boolean. No ML needed." },
@@ -169,6 +170,34 @@ function TextQuestion({ question, value, onChange }) {
 }
 
 function ResultsView({ answers }) {
+  const [saveState, setSaveState] = useState("idle"); // idle | checking | saving | saved | error
+  const [saveResult, setSaveResult] = useState(null);
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const handleSave = async () => {
+    setSaveState("checking");
+    const health = await checkHealth();
+    if (!health) {
+      setSaveState("error");
+      setErrorMsg("Backend offline — run: npm run server");
+      return;
+    }
+    if (!health.checks.db) {
+      setSaveState("error");
+      setErrorMsg("Database not connected — check DATABASE_URL in .env");
+      return;
+    }
+    setSaveState("saving");
+    try {
+      const result = await saveProfile(answers);
+      setSaveResult(result);
+      setSaveState("saved");
+    } catch (err) {
+      setSaveState("error");
+      setErrorMsg(err.message);
+    }
+  };
+
   const layerCompleteness = {};
   Object.values(LAYERS).forEach((_, i) => {
     const layerQs = QUESTIONS.filter((q) => q.layer === i);
@@ -187,8 +216,8 @@ function ResultsView({ answers }) {
     <div style={{ fontFamily: "'Space Mono', monospace" }}>
       <div style={{ textAlign: "center", marginBottom: 40 }}>
         <div style={{ fontSize: 11, color: "#666", letterSpacing: 4, marginBottom: 12 }}>YOUR PREFERENCES FILE</div>
-        <div style={{ fontSize: 28, fontWeight: 300, color: "#fff", letterSpacing: 2 }}>v0.0.3</div>
-        <div style={{ fontSize: 11, color: "#444", marginTop: 8 }}>answers persist · traits flow to radar</div>
+        <div style={{ fontSize: 28, fontWeight: 300, color: "#fff", letterSpacing: 2 }}>v0.0.4</div>
+        <div style={{ fontSize: 11, color: "#444", marginTop: 8 }}>save profile · embed vibes · match humans</div>
       </div>
 
       {/* Layer completeness */}
@@ -240,12 +269,73 @@ function ResultsView({ answers }) {
         </div>
       )}
 
-      {/* Export hint */}
+      {/* Save & embed */}
+      <div style={{ textAlign: "center", padding: 24, background: "#0a0a14", border: "1px solid #8866ff22", borderRadius: 8, marginBottom: 16 }}>
+        <div style={{ fontSize: 11, color: "#8866ff", letterSpacing: 3, marginBottom: 16 }}>ॐ SAVE & EMBED</div>
+
+        {saveState === "idle" && (
+          <button
+            onClick={handleSave}
+            style={{
+              background: "#8866ff15", border: "1px solid #8866ff66",
+              color: "#8866ff", padding: "12px 32px", borderRadius: 8,
+              fontFamily: "'Space Mono', monospace", fontSize: 11,
+              letterSpacing: 2, cursor: "pointer", transition: "all 0.2s ease",
+            }}
+            onMouseEnter={(e) => { e.target.style.background = "#8866ff25"; e.target.style.borderColor = "#8866ff"; }}
+            onMouseLeave={(e) => { e.target.style.background = "#8866ff15"; e.target.style.borderColor = "#8866ff66"; }}
+          >
+            SAVE PROFILE & EMBED VIBES
+          </button>
+        )}
+
+        {saveState === "checking" && (
+          <div style={{ fontSize: 11, color: "#8866ff", letterSpacing: 2 }}>connecting to server...</div>
+        )}
+
+        {saveState === "saving" && (
+          <div style={{ fontSize: 11, color: "#8866ff", letterSpacing: 2 }}>embedding semantic vibe layer...</div>
+        )}
+
+        {saveState === "saved" && saveResult && (
+          <div>
+            <div style={{ fontSize: 11, color: "#00ff88", letterSpacing: 2, marginBottom: 8 }}>PROFILE SAVED</div>
+            <div style={{ fontSize: 10, color: "#555", lineHeight: 1.8 }}>
+              id: {saveResult.id?.slice(0, 8)}...<br />
+              traits: {saveResult.trait_count}/10 · vibe: {saveResult.vibe_length} chars<br />
+              embedded: {saveResult.embedded ? "yes — vector stored" : "no — add API key to .env"}
+            </div>
+          </div>
+        )}
+
+        {saveState === "error" && (
+          <div>
+            <div style={{ fontSize: 11, color: "#ff3366", letterSpacing: 2, marginBottom: 8 }}>{errorMsg}</div>
+            <button
+              onClick={() => { setSaveState("idle"); setErrorMsg(""); }}
+              style={{
+                background: "transparent", border: "1px solid #2a2a3e",
+                color: "#888", padding: "8px 20px", borderRadius: 6,
+                fontFamily: "'Space Mono', monospace", fontSize: 10,
+                letterSpacing: 1, cursor: "pointer", marginTop: 8,
+              }}
+            >
+              RETRY
+            </button>
+          </div>
+        )}
+
+        <div style={{ fontSize: 9, color: "#444", marginTop: 12 }}>
+          saves profile to PostgreSQL · embeds Layer 2 via OpenRouter
+        </div>
+      </div>
+
+      {/* Roadmap */}
       <div style={{ textAlign: "center", padding: 24, background: "#0a0a14", border: "1px solid #ffaa0022", borderRadius: 8 }}>
-        <div style={{ fontSize: 11, color: "#ffaa00", letterSpacing: 3, marginBottom: 8 }}>☯ NEXT: MATCHING ENGINE</div>
+        <div style={{ fontSize: 11, color: "#ffaa00", letterSpacing: 3, marginBottom: 8 }}>☯ ROADMAP</div>
         <div style={{ fontSize: 11, color: "#666", lineHeight: 1.8 }}>
           v0.0.3 ✓ data pipeline + persistence<br />
-          v0.0.4 → embed Layer 2 responses via API<br />
+          v0.0.4 ✓ embed semantic layer via API<br />
           v0.0.5 → cosine similarity + real matching (50 users)<br />
           v0.1.0 → email alexwg@alexwg.org, subject: February 2027
         </div>
@@ -332,7 +422,7 @@ export default function PreferencesFile({ answers = {}, onAnswer }) {
         </button>
 
         <div style={{ marginTop: 48, fontSize: 9, color: "#333", letterSpacing: 2 }}>
-          ∙∙·▫▫ᵒᴼᵒ▫ₒₒ▫ᵒᴼᵒ▫▫·∙∙ v0.0.3 ∙∙·▫▫ᵒᴼᵒ▫ₒₒ▫ᵒᴼᵒ▫▫·∙∙
+          ∙∙·▫▫ᵒᴼᵒ▫ₒₒ▫ᵒᴼᵒ▫▫·∙∙ v0.0.4 ∙∙·▫▫ᵒᴼᵒ▫ₒₒ▫ᵒᴼᵒ▫▫·∙∙
         </div>
       </div>
     );
