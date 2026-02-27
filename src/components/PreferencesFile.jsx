@@ -187,8 +187,8 @@ function ResultsView({ answers }) {
     <div style={{ fontFamily: "'Space Mono', monospace" }}>
       <div style={{ textAlign: "center", marginBottom: 40 }}>
         <div style={{ fontSize: 11, color: "#666", letterSpacing: 4, marginBottom: 12 }}>YOUR PREFERENCES FILE</div>
-        <div style={{ fontSize: 28, fontWeight: 300, color: "#fff", letterSpacing: 2 }}>v0.0.1</div>
-        <div style={{ fontSize: 11, color: "#444", marginTop: 8 }}>ready for the routing layer</div>
+        <div style={{ fontSize: 28, fontWeight: 300, color: "#fff", letterSpacing: 2 }}>v0.0.3</div>
+        <div style={{ fontSize: 11, color: "#444", marginTop: 8 }}>answers persist · traits flow to radar</div>
       </div>
 
       {/* Layer completeness */}
@@ -244,9 +244,9 @@ function ResultsView({ answers }) {
       <div style={{ textAlign: "center", padding: 24, background: "#0a0a14", border: "1px solid #ffaa0022", borderRadius: 8 }}>
         <div style={{ fontSize: 11, color: "#ffaa00", letterSpacing: 3, marginBottom: 8 }}>☯ NEXT: MATCHING ENGINE</div>
         <div style={{ fontSize: 11, color: "#666", lineHeight: 1.8 }}>
-          v0.0.2 → embed Layer 2 responses via API<br />
-          v0.0.3 → cosine similarity + complementarity scoring<br />
-          v0.0.4 → 50 users → validate matches<br />
+          v0.0.3 ✓ data pipeline + persistence<br />
+          v0.0.4 → embed Layer 2 responses via API<br />
+          v0.0.5 → cosine similarity + real matching (50 users)<br />
           v0.1.0 → email alexwg@alexwg.org, subject: February 2027
         </div>
       </div>
@@ -254,12 +254,16 @@ function ResultsView({ answers }) {
   );
 }
 
-export default function PreferencesFile() {
-  const [currentQ, setCurrentQ] = useState(0);
-  const [answers, setAnswers] = useState({});
+export default function PreferencesFile({ answers = {}, onAnswer }) {
+  const answeredCount = Object.keys(answers).length;
+  const [currentQ, setCurrentQ] = useState(() => {
+    // Resume at first unanswered question
+    const firstUnanswered = QUESTIONS.findIndex(q => answers[q.id] === undefined || answers[q.id] === "");
+    return firstUnanswered >= 0 ? firstUnanswered : 0;
+  });
   const [showResults, setShowResults] = useState(false);
   const [headerGlitch, setHeaderGlitch] = useState("THE PREFERENCES FILE");
-  const [entered, setEntered] = useState(false);
+  const [entered, setEntered] = useState(answeredCount > 0);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -276,7 +280,7 @@ export default function PreferencesFile() {
   const canNext = answers[question?.id] !== undefined && answers[question?.id] !== "";
 
   const handleAnswer = (val) => {
-    setAnswers((prev) => ({ ...prev, [question.id]: val }));
+    onAnswer(question.id, val);
   };
 
   const next = () => {
@@ -328,7 +332,7 @@ export default function PreferencesFile() {
         </button>
 
         <div style={{ marginTop: 48, fontSize: 9, color: "#333", letterSpacing: 2 }}>
-          ∙∙·▫▫ᵒᴼᵒ▫ₒₒ▫ᵒᴼᵒ▫▫·∙∙ v0.0.1 ∙∙·▫▫ᵒᴼᵒ▫ₒₒ▫ᵒᴼᵒ▫▫·∙∙
+          ∙∙·▫▫ᵒᴼᵒ▫ₒₒ▫ᵒᴼᵒ▫▫·∙∙ v0.0.3 ∙∙·▫▫ᵒᴼᵒ▫ₒₒ▫ᵒᴼᵒ▫▫·∙∙
         </div>
       </div>
     );
