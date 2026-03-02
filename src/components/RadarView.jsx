@@ -276,19 +276,28 @@ function SimulatedMatch({ complement, matchScore, name, archetype }) {
   );
 }
 
-export default function RadarView() {
-  const [traits, setTraits] = useState({
-    builder_visionary: 4,
-    speed_quality: 2,
-    risk: 4,
-    chaos: 5,
-    social: 3,
-    decisions: 4,
-    focus: 4,
-    conflict: 2,
-    learning: 4,
-    exploit: 1,
-  });
+const DEFAULT_TRAITS = {
+  builder_visionary: 3,
+  speed_quality: 3,
+  risk: 3,
+  chaos: 3,
+  social: 3,
+  decisions: 3,
+  focus: 3,
+  conflict: 3,
+  learning: 3,
+  exploit: 3,
+};
+
+export default function RadarView({ intakeTraits = {} }) {
+  const hasIntakeData = Object.keys(intakeTraits).length > 0;
+
+  // Merge intake traits over defaults — component remounts on tab switch
+  // so this initializer always picks up latest intake data
+  const [traits, setTraits] = useState(() => ({
+    ...DEFAULT_TRAITS,
+    ...intakeTraits,
+  }));
 
   const [showComplement, setShowComplement] = useState(true);
   const [activeAxis, setActiveAxis] = useState(null);
@@ -333,7 +342,16 @@ export default function RadarView() {
       <div style={{ textAlign: "center", marginBottom: 24 }}>
         <div style={{ fontSize: 9, letterSpacing: 6, color: "#444", marginBottom: 8 }}>HUMAN ROUTING LAYER</div>
         <div style={{ fontSize: 22, fontWeight: 300, letterSpacing: 3, color: "#fff" }}>TRAIT RADAR</div>
-        <div style={{ fontSize: 10, color: "#555", marginTop: 6 }}>drag nodes to reshape your polygon · v0.0.2</div>
+        <div style={{ fontSize: 10, color: "#555", marginTop: 6 }}>drag nodes to reshape your polygon · v0.0.4</div>
+        {hasIntakeData ? (
+          <div style={{ fontSize: 9, color: "#00ff88", marginTop: 8, letterSpacing: 2 }}>
+            ⚡ SYNCED FROM INTAKE — {Object.keys(intakeTraits).length}/10 traits loaded
+          </div>
+        ) : (
+          <div style={{ fontSize: 9, color: "#ff336688", marginTop: 8, letterSpacing: 2 }}>
+            ○ NO INTAKE DATA — fill Layer 1 sliders to sync
+          </div>
+        )}
       </div>
 
       {/* View toggle */}
@@ -471,7 +489,7 @@ export default function RadarView() {
           </div>
           <div style={{ fontSize: 10, color: "#555", marginBottom: 20, lineHeight: 1.8 }}>
             these are archetype profiles to demonstrate matching.<br />
-            in v0.0.3 these will be real users with embedded vibes.
+            in v0.0.4 these will be real users with embedded vibes.
           </div>
 
           {simulatedMatches.map((match, i) => {
@@ -518,8 +536,8 @@ export default function RadarView() {
           ∙∙·▫▫ᵒᴼᵒ▫ₒₒ▫ᵒᴼᵒ▫▫·∙∙
         </div>
         <div style={{ fontSize: 9, color: "#444", letterSpacing: 1.5, lineHeight: 2 }}>
-          HUMAN ROUTING LAYER · PREFERENCES FILE v0.0.2<br />
-          next → embed semantic layer → real matching → ship to alex
+          HUMAN ROUTING LAYER · PREFERENCES FILE v0.0.4<br />
+          next → real matching (50 users) → ship to alex
         </div>
         <div style={{ fontSize: 8, color: "#333", letterSpacing: 2, marginTop: 8 }}>
           ∙∙·▫▫ᵒᴼᵒ▫ₒₒ▫ᵒᴼᵒ▫▫·∙∙
