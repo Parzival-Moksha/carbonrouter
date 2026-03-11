@@ -399,28 +399,45 @@ export default function VoiceInterview({ onComplete }) {
             setCurrentTranscript(currentAgentTextRef.current)
             break
 
-          // Response finished
+          // Response finished — keep text visible briefly before moving to history
           case 'response.done':
             if (currentAgentTextRef.current) {
-              setTranscript(prev => [...prev, { role: 'assistant', text: currentAgentTextRef.current }])
+              const finalText = currentAgentTextRef.current
+              setTranscript(prev => [...prev, { role: 'assistant', text: finalText }])
               currentAgentTextRef.current = ''
-              setCurrentTranscript('')
+              // Delay clearing current transcript so user can read it
+              setTimeout(() => setCurrentTranscript(''), 2000)
             }
             setStatus('listening')
             break
 
-          // User started speaking → interrupt agent
+          // User started speaking → interrupt agent, add placeholder
           case 'input_audio_buffer.speech_started':
             stopPlayback()
             setStatus('listening')
+            setTranscript(prev => {
+              // Only add placeholder if last entry isn't already a user placeholder
+              if (prev.length > 0 && prev[prev.length - 1].role === 'user' && prev[prev.length - 1].text === '...') return prev
+              return [...prev, { role: 'user', text: '...' }]
+            })
             break
 
-          // User transcript finalized
+          // User transcript finalized — update the placeholder, don't append duplicates
           case 'conversation.item.added':
             if (msg.item?.role === 'user' && msg.item?.content) {
               for (const c of msg.item.content) {
                 if (c.type === 'input_audio' && c.transcript) {
-                  setTranscript(prev => [...prev, { role: 'user', text: c.transcript }])
+                  setTranscript(prev => {
+                    const updated = [...prev]
+                    // Find last user entry and update it
+                    for (let i = updated.length - 1; i >= 0; i--) {
+                      if (updated[i].role === 'user') {
+                        updated[i] = { role: 'user', text: c.transcript }
+                        return updated
+                      }
+                    }
+                    return [...prev, { role: 'user', text: c.transcript }]
+                  })
                   break
                 }
               }
@@ -456,12 +473,12 @@ export default function VoiceInterview({ onComplete }) {
                 return
               }
 
-              // Return function result
+              // Return function result — do NOT send response.create
+              // Server VAD will trigger next response when user speaks
               ws.send(JSON.stringify({
                 type: 'conversation.item.create',
                 item: { type: 'function_call_output', call_id, output: JSON.stringify({ success: true }) },
               }))
-              ws.send(JSON.stringify({ type: 'response.create' }))
             } catch (e) {
               console.error('Function call parse error:', e)
             }

@@ -361,7 +361,10 @@ export default function Welcome({ onStart, onStartVoice }) {
         pointerEvents: showEnterButton ? 'auto' : 'none',
       }}>
         <button
-          onClick={onStart}
+          onClick={() => {
+            const cta = document.querySelector(`[data-section="${SECTIONS.length + 1}"]`)
+            cta?.scrollIntoView({ behavior: 'smooth' })
+          }}
           style={{
             background: '#00ff8818',
             border: '1px solid #00ff8844',

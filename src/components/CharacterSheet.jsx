@@ -29,6 +29,7 @@ export default function CharacterSheet({ sheet, transcript, onRestart }) {
   const [email, setEmail] = useState('')
   const [consent, setConsent] = useState('mutual') // anonymous | mutual | open
   const [saved, setSaved] = useState(false)
+  const [linkCopied, setLinkCopied] = useState(false)
   const parsed = parseSheet(sheet)
 
   useEffect(() => {
@@ -321,7 +322,7 @@ export default function CharacterSheet({ sheet, transcript, onRestart }) {
                 color: 'var(--accent)',
                 padding: '14px 0',
               }}>
-                SAVED
+                ✓ SAVED
               </div>
               <button
                 onClick={handleDownload}
@@ -346,24 +347,134 @@ export default function CharacterSheet({ sheet, transcript, onRestart }) {
                   e.target.style.color = 'var(--text-muted)'
                 }}
               >
-                DOWNLOAD
+                DOWNLOAD JSON
               </button>
             </>
           )}
+        </div>
 
+        {/* Confirmation message — appears after save */}
+        {saved && (
+          <div style={{
+            marginTop: 32,
+            padding: '24px 28px',
+            background: '#00ff8808',
+            border: '1px solid #00ff8822',
+            borderRadius: 12,
+            textAlign: 'center',
+          }}>
+            <div style={{
+              fontSize: 15,
+              color: 'var(--accent)',
+              fontWeight: 400,
+              marginBottom: 8,
+              lineHeight: 1.8,
+            }}>
+              You're in the network.
+            </div>
+            <div style={{
+              fontSize: 13,
+              color: 'var(--text-dim)',
+              fontWeight: 300,
+              lineHeight: 1.8,
+            }}>
+              We'll email you as soon as we find your first high-synergy route.<br />
+              You can close this window now.
+            </div>
+          </div>
+        )}
+
+        {/* Referral — copy link + CTA */}
+        {saved && (
+          <div style={{
+            marginTop: 24,
+            padding: '28px 28px',
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border)',
+            borderRadius: 12,
+            borderLeft: '3px solid #8866ff',
+          }}>
+            <div style={{
+              fontFamily: 'var(--mono)',
+              fontSize: 9,
+              letterSpacing: 4,
+              color: '#8866ff',
+              marginBottom: 16,
+            }}>
+              EXPAND THE NETWORK
+            </div>
+            <div style={{
+              fontSize: 13,
+              color: 'var(--text-dim)',
+              fontWeight: 300,
+              lineHeight: 1.8,
+              marginBottom: 16,
+            }}>
+              The more people in the network, the better your routes. Send this to 2 friends who would benefit from CarbonRouter.
+            </div>
+            <div style={{
+              display: 'flex',
+              gap: 8,
+              alignItems: 'center',
+            }}>
+              <input
+                readOnly
+                value="https://carbonrouter.vercel.app"
+                style={{
+                  flex: 1,
+                  background: 'var(--bg)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 8,
+                  color: 'var(--text-dim)',
+                  padding: '10px 14px',
+                  fontSize: 13,
+                  fontFamily: 'var(--mono)',
+                  outline: 'none',
+                }}
+                onClick={e => e.target.select()}
+              />
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText('https://carbonrouter.vercel.app')
+                  setLinkCopied(true)
+                  setTimeout(() => setLinkCopied(false), 2000)
+                }}
+                style={{
+                  background: linkCopied ? '#8866ff22' : 'transparent',
+                  border: `1px solid ${linkCopied ? '#8866ff' : 'var(--border)'}`,
+                  color: linkCopied ? '#8866ff' : 'var(--text-muted)',
+                  padding: '10px 18px',
+                  borderRadius: 8,
+                  fontFamily: 'var(--mono)',
+                  fontSize: 9,
+                  letterSpacing: 2,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  minWidth: 80,
+                }}
+              >
+                {linkCopied ? 'COPIED' : 'COPY'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Start over — subtle, at bottom */}
+        <div style={{ textAlign: 'center', marginTop: 32 }}>
           <button
             onClick={onRestart}
             style={{
               background: 'transparent',
-              border: '1px solid var(--border)',
-              color: 'var(--text-muted)',
-              padding: '14px 24px',
-              borderRadius: 8,
+              border: 'none',
+              color: '#333',
               fontFamily: 'var(--mono)',
-              fontSize: 11,
+              fontSize: 9,
               letterSpacing: 2,
               cursor: 'pointer',
+              padding: '8px 16px',
             }}
+            onMouseEnter={e => e.target.style.color = 'var(--text-muted)'}
+            onMouseLeave={e => e.target.style.color = '#333'}
           >
             START OVER
           </button>
@@ -371,7 +482,7 @@ export default function CharacterSheet({ sheet, transcript, onRestart }) {
 
         {/* Footer */}
         <div style={{
-          marginTop: 56,
+          marginTop: 40,
           textAlign: 'center',
           fontFamily: 'var(--mono)',
           fontSize: 8,
