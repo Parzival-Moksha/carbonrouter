@@ -5,122 +5,193 @@ const SECTIONS = [
   {
     color: '#ff3366',
     image: '/images/seg01.jpg',
-    text: `To meet the right person at the right time could be life-changing. What if once-in-a-decade encounters could happen every week? Can AI improve on our current human connection stack of happenstance, word-of-mouth, plus LinkedIn?`,
-    animation: 'slideUp',
+    text: `To meet the right person at the right time could be life-changing. What if once-in-a-decade encounters could happen every week?`,
+    effect: 'parallax', // bg fixed, text scrolls over
   },
   {
     color: '#00ff88',
     image: '/images/seg02.jpg',
-    text: `How many tokens does it take for an LLM to generate a high-resolution map of what makes you productive? Could we compute the highest expected synergy for sets of human interactions across hundreds of profiles in one context?`,
-    animation: 'slideRight',
+    text: `How many tokens does it take for an LLM to generate a high-resolution map of what makes you productive?`,
+    effect: 'reveal', // next section slides up revealing this fixed section
   },
   {
     color: '#8866ff',
     image: '/images/seg03.jpg',
-    text: `Frontier LLMs can juggle rich preference manifolds of hundreds of people in their context, enabling high-dimensional instant sorting. SOTA LLMs with quality context engineering are the approximation algorithm killers. NP-hard no more.`,
-    animation: 'fadeScale',
+    text: `Frontier LLMs can juggle rich preference manifolds of hundreds of people in their context. NP-hard no more.`,
+    effect: 'zoom', // zooms in from distance
   },
   {
     color: '#ffaa00',
     image: '/images/seg04.jpg',
-    text: `Opus scores your productivity, synergy, and complementarity across dozens of dimensions with SOUL.md's of other, pre-selected users and computes your highest scoring ideal monthly routing schedule.`,
-    animation: 'slideLeft',
+    text: `Opus scores your synergy across dozens of dimensions and computes your ideal monthly routing schedule.`,
+    effect: 'parallax',
   },
   {
     color: '#00ff88',
     image: '/images/seg05.jpg',
-    text: `The more data about you, the higher the routing resolution. Want your personal agent to handle your profile creation? Or do you have 10 minutes to talk to our curious agent per text or voice? Wanna do both? Let us get who you are and we'll email your ideal routing for next month.`,
-    animation: 'slideUp',
+    text: `The more data about you, the higher the routing resolution. 10 minutes with our agent. That's all it takes.`,
+    effect: 'reveal',
   },
   {
     color: '#8866ff',
     image: '/images/seg06.jpg',
-    text: `This is alpha, so just do a quick interview and recommend to 2 friends who you think would benefit from CarbonRouter. You'll hear from us when we know where to route you.`,
-    animation: 'fadeScale',
+    text: `This is alpha. Do a quick interview and recommend 2 friends. You'll hear from us when we find your routes.`,
+    effect: 'slideUp',
   },
   {
     color: '#ff3366',
     image: '/images/seg07.jpg',
-    text: `1.0 will give you great recommendations. v2.0 will route you better than you could. v3.0 will be your exocortex's motor neurons to his meat puppet.`,
-    animation: 'slideRight',
+    text: `v1.0 gives great recommendations. v2.0 routes you better than you could. v3.0 is your exocortex.`,
+    effect: 'zoom',
   },
 ]
 
-// Scroll-triggered section with background image
-function ScrollSection({ section, index }) {
+function FullSection({ section, index }) {
   const ref = useRef(null)
-  const [visible, setVisible] = useState(false)
+  const [progress, setProgress] = useState(0) // 0 = not visible, 1 = fully visible
 
   useEffect(() => {
     const el = ref.current
     if (!el) return
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true)
-          observer.unobserve(el)
-        }
-      },
-      { threshold: 0.15, rootMargin: '0px 0px -50px 0px' }
-    )
-    observer.observe(el)
-    return () => observer.disconnect()
+    const onScroll = () => {
+      const rect = el.getBoundingClientRect()
+      const vh = window.innerHeight
+      // progress: 0 when section enters from bottom, 1 when fully covering viewport
+      const p = Math.max(0, Math.min(1, 1 - rect.top / vh))
+      setProgress(p)
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true })
+    onScroll()
+    return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  const transforms = {
-    slideUp: visible ? 'translateY(0)' : 'translateY(60px)',
-    slideRight: visible ? 'translateX(0)' : 'translateX(-80px)',
-    slideLeft: visible ? 'translateX(0)' : 'translateX(80px)',
-    fadeScale: visible ? 'scale(1)' : 'scale(0.92)',
+  const { effect, color, image, text } = section
+
+  // Different transform styles based on effect type
+  let sectionStyle = {}
+  let bgStyle = {}
+  let textStyle = {}
+
+  if (effect === 'parallax') {
+    // Background moves at half speed (parallax), content fades in
+    sectionStyle = { position: 'relative', zIndex: index + 1 }
+    bgStyle = {
+      transform: `translateY(${(1 - progress) * 30}%)`,
+    }
+    textStyle = {
+      opacity: Math.max(0, (progress - 0.3) / 0.5),
+      transform: `translateY(${(1 - progress) * 60}px)`,
+    }
+  } else if (effect === 'reveal') {
+    // Section is sticky/fixed, next section scrolls over it
+    sectionStyle = { position: 'sticky', top: 0, zIndex: index }
+    bgStyle = {}
+    textStyle = {
+      opacity: Math.max(0, (progress - 0.2) / 0.4),
+      transform: `scale(${0.9 + progress * 0.1})`,
+    }
+  } else if (effect === 'zoom') {
+    // Zooms in from far away
+    sectionStyle = { position: 'relative', zIndex: index + 1 }
+    const scale = 0.6 + progress * 0.4
+    bgStyle = {
+      transform: `scale(${scale})`,
+    }
+    textStyle = {
+      opacity: Math.max(0, (progress - 0.4) / 0.4),
+      transform: `translateY(${(1 - progress) * 40}px)`,
+    }
+  } else if (effect === 'slideUp') {
+    // Slides up from below with momentum
+    sectionStyle = { position: 'relative', zIndex: index + 1 }
+    bgStyle = {}
+    textStyle = {
+      opacity: Math.max(0, (progress - 0.2) / 0.5),
+      transform: `translateY(${(1 - progress) * 100}px)`,
+    }
   }
 
   return (
     <div
       ref={ref}
       style={{
-        position: 'relative',
-        borderRadius: 14,
+        height: '100vh',
+        width: '100%',
         overflow: 'hidden',
-        opacity: visible ? 1 : 0,
-        transform: transforms[section.animation],
-        transition: `all 0.9s cubic-bezier(0.16, 1, 0.3, 1) ${0.05 * index}s`,
+        ...sectionStyle,
       }}
     >
       {/* Background image */}
       <div style={{
         position: 'absolute',
         inset: 0,
-        backgroundImage: `url(${section.image})`,
+        backgroundImage: `url(${image})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
-        opacity: 0.2,
-        filter: 'brightness(0.7) saturate(0.8)',
+        opacity: 0.25,
+        transition: 'transform 0.1s linear',
+        ...bgStyle,
       }} />
 
-      {/* Gradient overlay */}
+      {/* Color gradient overlay */}
       <div style={{
         position: 'absolute',
         inset: 0,
-        background: `linear-gradient(135deg, ${section.color}10 0%, var(--bg-card) 40%, var(--bg-card) 100%)`,
+        background: `radial-gradient(ellipse at center, ${color}08 0%, #0a0a1a 70%)`,
       }} />
 
-      {/* Content */}
+      {/* Vignette */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        background: 'radial-gradient(ellipse at center, transparent 40%, #0a0a1a 100%)',
+      }} />
+
+      {/* Text content */}
       <div style={{
         position: 'relative',
-        padding: '28px 32px',
-        borderLeft: `3px solid ${section.color}`,
-        border: '1px solid var(--border)',
-        borderRadius: 14,
+        height: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '0 10vw',
+        transition: 'opacity 0.15s ease, transform 0.15s ease',
+        ...textStyle,
       }}>
-        <p style={{
-          fontSize: 14,
-          lineHeight: 1.85,
-          color: 'var(--text-dim)',
-          fontWeight: 300,
-        }}>
-          {section.text}
-        </p>
+        <div style={{ maxWidth: 800, textAlign: 'center' }}>
+          {/* Section accent line */}
+          <div style={{
+            width: 40,
+            height: 2,
+            background: color,
+            margin: '0 auto 28px',
+            boxShadow: `0 0 20px ${color}66`,
+          }} />
+
+          <p style={{
+            fontSize: 'clamp(20px, 3.2vw, 36px)',
+            lineHeight: 1.6,
+            color: '#e0e0e0',
+            fontWeight: 300,
+            letterSpacing: 0.5,
+          }}>
+            {text}
+          </p>
+
+          {/* Section indicator */}
+          <div style={{
+            marginTop: 32,
+            fontFamily: 'var(--mono)',
+            fontSize: 9,
+            letterSpacing: 4,
+            color: color,
+            opacity: 0.5,
+          }}>
+            {String(index + 1).padStart(2, '0')} / {String(SECTIONS.length).padStart(2, '0')}
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -202,23 +273,25 @@ export default function Welcome({ onStart, onStartVoice }) {
   }, [])
 
   return (
-    <div style={{ minHeight: '100vh', position: 'relative' }}>
-      <NetworkCanvas opacity={0.5} nodeCount={70} />
-
+    <div style={{ background: '#0a0a1a' }}>
+      {/* Hero section — full viewport */}
       <div style={{
+        height: '100vh',
         position: 'relative',
-        zIndex: 1,
-        maxWidth: 720,
-        margin: '0 auto',
-        padding: '80px 32px 60px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
       }}>
-        {/* Header */}
+        <NetworkCanvas opacity={0.5} nodeCount={70} />
+
         <div style={{
-          marginBottom: 64,
+          position: 'relative',
+          zIndex: 1,
           textAlign: 'center',
+          padding: '0 32px',
           opacity: entered ? 1 : 0,
-          transform: entered ? 'translateY(0)' : 'translateY(20px)',
-          transition: 'all 1s cubic-bezier(0.16, 1, 0.3, 1)',
+          transform: entered ? 'translateY(0)' : 'translateY(30px)',
+          transition: 'all 1.2s cubic-bezier(0.16, 1, 0.3, 1)',
         }}>
           <div style={{
             fontFamily: 'var(--mono)',
@@ -231,166 +304,216 @@ export default function Welcome({ onStart, onStartVoice }) {
           </div>
           <h1 style={{
             fontFamily: 'var(--mono)',
-            fontSize: 38,
+            fontSize: 'clamp(32px, 5vw, 52px)',
             fontWeight: 400,
-            letterSpacing: 6,
+            letterSpacing: 8,
             color: '#fff',
-            marginBottom: 12,
+            marginBottom: 16,
           }}>
             <GlitchText text="CARBONROUTER" />
           </h1>
           <div style={{
-            fontSize: 14,
+            fontSize: 16,
             color: 'var(--text-dim)',
-            lineHeight: 1.8,
+            lineHeight: 2,
             fontWeight: 300,
+            maxWidth: 500,
+            margin: '0 auto',
           }}>
             Nobody has a permanent address anymore.<br />
             They have a subscription and a preferences file.
           </div>
-        </div>
 
-        {/* Pitch sections with scroll animations */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-          {SECTIONS.map((s, i) => (
-            <ScrollSection key={i} section={s} index={i} />
-          ))}
-        </div>
-
-        {/* CTA */}
-        <div style={{
-          marginTop: 56,
-          textAlign: 'center',
-          opacity: entered ? 1 : 0,
-          transition: 'opacity 1s ease 1.4s',
-        }}>
-          <button
-            onClick={onStart}
-            style={{
-              background: 'var(--accent-dim)',
-              border: '1px solid var(--accent)',
-              color: 'var(--accent)',
-              padding: '16px 48px',
-              borderRadius: 8,
+          {/* Scroll indicator */}
+          <div style={{
+            marginTop: 60,
+            opacity: entered ? 0.4 : 0,
+            transition: 'opacity 2s ease 1.5s',
+            animation: 'scrollBounce 2s ease-in-out infinite',
+          }}>
+            <div style={{
               fontFamily: 'var(--mono)',
-              fontSize: 13,
-              letterSpacing: 4,
-              cursor: 'pointer',
-              transition: 'all 0.3s ease',
-            }}
-            onMouseEnter={e => {
-              e.target.style.background = '#00ff8830'
-              e.target.style.boxShadow = '0 0 30px #00ff8822'
-            }}
-            onMouseLeave={e => {
-              e.target.style.background = 'var(--accent-dim)'
-              e.target.style.boxShadow = 'none'
-            }}
-          >
-            TALK TO OUR AGENT
-          </button>
+              fontSize: 8,
+              letterSpacing: 3,
+              color: 'var(--text-muted)',
+              marginBottom: 8,
+            }}>
+              SCROLL
+            </div>
+            <div style={{ fontSize: 18, color: 'var(--text-muted)' }}>↓</div>
+          </div>
+        </div>
 
-          <div style={{ marginTop: 20, display: 'flex', justifyContent: 'center', gap: 24 }}>
+        <style>{`
+          @keyframes scrollBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+          }
+        `}</style>
+      </div>
+
+      {/* Full-page pitch sections */}
+      {SECTIONS.map((s, i) => (
+        <FullSection key={i} section={s} index={i} />
+      ))}
+
+      {/* CTA section — full viewport */}
+      <div style={{
+        minHeight: '100vh',
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: SECTIONS.length + 1,
+      }}>
+        <NetworkCanvas opacity={0.3} nodeCount={50} />
+
+        <div style={{
+          position: 'relative',
+          zIndex: 1,
+          textAlign: 'center',
+          padding: '60px 32px',
+          maxWidth: 700,
+        }}>
+          {/* CTA buttons */}
+          <div style={{ marginBottom: 48 }}>
+            <div style={{
+              fontFamily: 'var(--mono)',
+              fontSize: 9,
+              letterSpacing: 4,
+              color: 'var(--text-muted)',
+              marginBottom: 24,
+            }}>
+              BEGIN YOUR CHARACTER SHEET
+            </div>
+
             <button
-              onClick={onStartVoice}
+              onClick={onStart}
               style={{
+                background: 'var(--accent-dim)',
+                border: '1px solid var(--accent)',
+                color: 'var(--accent)',
+                padding: '18px 56px',
+                borderRadius: 8,
                 fontFamily: 'var(--mono)',
-                fontSize: 9,
-                letterSpacing: 2,
-                color: '#8866ff',
-                background: 'transparent',
-                border: '1px solid #8866ff44',
-                padding: '10px 24px',
-                borderRadius: 6,
+                fontSize: 14,
+                letterSpacing: 5,
                 cursor: 'pointer',
-                transition: 'all 0.2s ease',
+                transition: 'all 0.3s ease',
               }}
               onMouseEnter={e => {
-                e.target.style.background = '#8866ff15'
-                e.target.style.borderColor = '#8866ff88'
+                e.target.style.background = '#00ff8830'
+                e.target.style.boxShadow = '0 0 40px #00ff8822'
               }}
               onMouseLeave={e => {
-                e.target.style.background = 'transparent'
-                e.target.style.borderColor = '#8866ff44'
+                e.target.style.background = 'var(--accent-dim)'
+                e.target.style.boxShadow = 'none'
               }}
             >
-              VOICE MODE
+              TALK TO OUR AGENT
             </button>
-          </div>
 
-          <div style={{
-            marginTop: 28,
-            display: 'flex',
-            justifyContent: 'center',
-            gap: 20,
-          }}>
-            <ComingSoonButton label="CONNECT GOOGLE CALENDAR" />
-            <ComingSoonButton label="CONNECT YOUR AI AGENT" />
-          </div>
-        </div>
-
-        {/* Roadmap */}
-        <div style={{
-          marginTop: 56,
-          padding: '28px 28px',
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border)',
-          borderRadius: 10,
-          borderLeft: '3px solid #ffaa00',
-        }}>
-          <div style={{
-            fontFamily: 'var(--mono)',
-            fontSize: 9,
-            letterSpacing: 4,
-            color: '#ffaa00',
-            marginBottom: 20,
-          }}>
-            ROADMAP
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {[
-              { v: 'v0.1', label: 'Character sheet crafter (AI interview, text + voice)', active: true },
-              { v: 'v0.2', label: 'Multi-profile matching engine' },
-              { v: 'v0.3', label: 'Interactive route proposals with one-time email auth and chat' },
-              { v: 'v0.4', label: 'Agent-to-agent data gathering' },
-              { v: 'v0.5', label: 'Google Calendar + more app integrations' },
-              { v: 'v0.6', label: 'Multi-route synergy calculation with high-res simulations' },
-              { v: 'v1.0', label: 'Post-encounter feedback loop — character sheets update from interaction data' },
-              { v: 'v2.0', label: 'Proactive routing updates so good you accept them by default' },
-              { v: 'v3.0', label: 'Exocortex — merging to the Everything App' },
-            ].map((item, i) => (
-              <div key={i} style={{ display: 'flex', gap: 14, alignItems: 'baseline' }}>
-                <span style={{
+            <div style={{ marginTop: 20, display: 'flex', justifyContent: 'center', gap: 24 }}>
+              <button
+                onClick={onStartVoice}
+                style={{
                   fontFamily: 'var(--mono)',
-                  fontSize: 10,
-                  color: item.active ? '#00ff88' : 'var(--text-muted)',
-                  minWidth: 36,
-                  letterSpacing: 0.5,
-                }}>
-                  {item.v}
-                </span>
-                <span style={{
-                  fontSize: 12,
-                  color: item.active ? 'var(--text)' : '#555',
-                  fontWeight: 300,
-                }}>
-                  {item.label} {item.active && '←'}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
+                  fontSize: 9,
+                  letterSpacing: 2,
+                  color: '#8866ff',
+                  background: 'transparent',
+                  border: '1px solid #8866ff44',
+                  padding: '10px 24px',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={e => {
+                  e.target.style.background = '#8866ff15'
+                  e.target.style.borderColor = '#8866ff88'
+                }}
+                onMouseLeave={e => {
+                  e.target.style.background = 'transparent'
+                  e.target.style.borderColor = '#8866ff44'
+                }}
+              >
+                VOICE MODE
+              </button>
+            </div>
 
-        {/* Footer */}
-        <div style={{
-          marginTop: 64,
-          textAlign: 'center',
-          fontFamily: 'var(--mono)',
-          fontSize: 8,
-          color: '#333',
-          letterSpacing: 2,
-        }}>
-          ∙∙·▫▫ᵒᴼᵒ▫ₒₒ▫ᵒᴼᵒ▫▫·∙∙ v0.1.0 ∙∙·▫▫ᵒᴼᵒ▫ₒₒ▫ᵒᴼᵒ▫▫·∙∙
+            <div style={{
+              marginTop: 28,
+              display: 'flex',
+              justifyContent: 'center',
+              gap: 20,
+            }}>
+              <ComingSoonButton label="CONNECT GOOGLE CALENDAR" />
+              <ComingSoonButton label="CONNECT YOUR AI AGENT" />
+            </div>
+          </div>
+
+          {/* Roadmap */}
+          <div style={{
+            padding: '28px 28px',
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border)',
+            borderRadius: 10,
+            borderLeft: '3px solid #ffaa00',
+            textAlign: 'left',
+          }}>
+            <div style={{
+              fontFamily: 'var(--mono)',
+              fontSize: 9,
+              letterSpacing: 4,
+              color: '#ffaa00',
+              marginBottom: 20,
+            }}>
+              ROADMAP
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {[
+                { v: 'v0.1', label: 'Character sheet crafter (AI interview, text + voice)', active: true },
+                { v: 'v0.2', label: 'Multi-profile matching engine' },
+                { v: 'v0.3', label: 'Interactive route proposals with one-time email auth and chat' },
+                { v: 'v0.4', label: 'Agent-to-agent data gathering' },
+                { v: 'v0.5', label: 'Google Calendar + more app integrations' },
+                { v: 'v0.6', label: 'Multi-route synergy calculation with high-res simulations' },
+                { v: 'v1.0', label: 'Post-encounter feedback loop — character sheets update from interaction data' },
+                { v: 'v2.0', label: 'Proactive routing updates so good you accept them by default' },
+                { v: 'v3.0', label: 'Exocortex — merging to the Everything App' },
+              ].map((item, i) => (
+                <div key={i} style={{ display: 'flex', gap: 14, alignItems: 'baseline' }}>
+                  <span style={{
+                    fontFamily: 'var(--mono)',
+                    fontSize: 10,
+                    color: item.active ? '#00ff88' : 'var(--text-muted)',
+                    minWidth: 36,
+                    letterSpacing: 0.5,
+                  }}>
+                    {item.v}
+                  </span>
+                  <span style={{
+                    fontSize: 12,
+                    color: item.active ? 'var(--text)' : '#555',
+                    fontWeight: 300,
+                  }}>
+                    {item.label} {item.active && '←'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div style={{
+            marginTop: 48,
+            fontFamily: 'var(--mono)',
+            fontSize: 8,
+            color: '#333',
+            letterSpacing: 2,
+          }}>
+            ∙∙·▫▫ᵒᴼᵒ▫ₒₒ▫ᵒᴼᵒ▫▫·∙∙ v0.1.0 ∙∙·▫▫ᵒᴼᵒ▫ₒₒ▫ᵒᴼᵒ▫▫·∙∙
+          </div>
         </div>
       </div>
     </div>

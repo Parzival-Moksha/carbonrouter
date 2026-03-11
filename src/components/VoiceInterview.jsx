@@ -182,8 +182,13 @@ export default function VoiceInterview({ onComplete }) {
       }))
     }
 
+    // Connect through a zero-gain node so ScriptProcessor fires events
+    // but mic audio does NOT play through speakers (prevents echo/double voice)
+    const silentGain = audioCtx.createGain()
+    silentGain.gain.value = 0
     source.connect(processor)
-    processor.connect(audioCtx.destination) // needed for ScriptProcessor to work
+    processor.connect(silentGain)
+    silentGain.connect(audioCtx.destination)
   }, [])
 
   const connect = useCallback(async () => {
