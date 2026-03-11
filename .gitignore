@@ -5,3 +5,5 @@ dist
 .env
 .vercel
 .env*.local
+generate_images.js
+generated_images/
