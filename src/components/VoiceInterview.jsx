@@ -194,9 +194,9 @@ export default function VoiceInterview({ onComplete }) {
         throw new Error(err.error || 'Failed to get voice token')
       }
       const tokenData = await tokenRes.json()
-      const token = tokenData.client_secret?.value || tokenData.token || tokenData.secret
+      const token = tokenData.value || tokenData.client_secret?.value || tokenData.token
 
-      if (!token) throw new Error('No token in response')
+      if (!token) throw new Error('No token in response: ' + JSON.stringify(tokenData))
 
       // Init audio context
       audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: SAMPLE_RATE })
