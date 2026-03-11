@@ -145,6 +145,7 @@ export default function Interview({ onComplete }) {
   ])
   const [error, setError] = useState('')
   const [firstMessageDone, setFirstMessageDone] = useState(false)
+  const [isGeneratingSheet, setIsGeneratingSheet] = useState(false)
 
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
@@ -165,12 +166,16 @@ export default function Interview({ onComplete }) {
     setIsStreaming(true)
     setStreamingText('')
     setError('')
+    setIsGeneratingSheet(false)
 
     try {
       const fullText = await streamChat(
         chatMessages.map(m => ({ role: m.role, content: m.content })),
         API_KEY,
         (_delta, full) => {
+          if (full.includes('```charactersheet')) {
+            setIsGeneratingSheet(true)
+          }
           // Strip metadata blocks during streaming to prevent jank
           const clean = stripMetaFromStreaming(full)
           setStreamingText(clean)
@@ -233,7 +238,8 @@ export default function Interview({ onComplete }) {
 
   return (
     <div style={{
-      minHeight: '100vh',
+      height: '100vh',
+      overflow: 'hidden',
       display: 'flex',
       background: 'var(--bg)',
       position: 'relative',
@@ -256,9 +262,6 @@ export default function Interview({ onComplete }) {
         alignItems: 'center',
         gap: 24,
         flexShrink: 0,
-        position: 'sticky',
-        top: 0,
-        height: '100vh',
         overflowY: 'auto',
         zIndex: 1,
       }}>
@@ -323,6 +326,7 @@ export default function Interview({ onComplete }) {
         maxWidth: 760,
         position: 'relative',
         zIndex: 1,
+        overflow: 'hidden',
       }}>
         {/* Messages */}
         <div style={{
@@ -343,11 +347,41 @@ export default function Interview({ onComplete }) {
             <Message key={i + 1} role={m.role} text={m.text} />
           ))}
 
-          {isStreaming && streamingText && (
+          {isStreaming && isGeneratingSheet && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              padding: '14px 18px',
+              marginBottom: 16,
+            }}>
+              <div style={{ display: 'flex', gap: 5 }}>
+                {[0, 1, 2].map(i => (
+                  <div key={i} style={{
+                    width: 5, height: 5, borderRadius: '50%',
+                    background: 'var(--accent)',
+                    opacity: 0.7,
+                    animation: `blink 1.4s infinite ${i * 0.2}s`,
+                  }} />
+                ))}
+              </div>
+              <span style={{
+                fontFamily: 'var(--mono)',
+                fontSize: 10,
+                letterSpacing: 3,
+                color: 'var(--accent)',
+                opacity: 0.8,
+              }}>
+                GENERATING CHARACTER SHEET...
+              </span>
+            </div>
+          )}
+
+          {isStreaming && !isGeneratingSheet && streamingText && (
             <Message role="assistant" text={streamingText} isStreaming={true} />
           )}
 
-          {isStreaming && !streamingText && (
+          {isStreaming && !isGeneratingSheet && !streamingText && (
             <div style={{
               display: 'flex',
               gap: 6,

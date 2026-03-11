@@ -29,6 +29,8 @@ export default function CharacterSheet({ sheet, transcript, onRestart }) {
   const [email, setEmail] = useState('')
   const [consent, setConsent] = useState('mutual') // anonymous | mutual | open
   const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const [linkCopied, setLinkCopied] = useState(false)
   const parsed = parseSheet(sheet)
 
@@ -45,9 +47,29 @@ export default function CharacterSheet({ sheet, transcript, onRestart }) {
     createdAt: new Date().toISOString(),
   })
 
-  const handleSave = () => {
-    localStorage.setItem('carbonrouter_profile', JSON.stringify(getSaveData()))
-    setSaved(true)
+  const handleSave = async () => {
+    setSaving(true)
+    setSaveError('')
+    const data = getSaveData()
+    localStorage.setItem('carbonrouter_profile', JSON.stringify(data))
+    try {
+      const res = await fetch('/api/save-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || 'Server error')
+      }
+      setSaved(true)
+    } catch (err) {
+      // Still mark saved locally but surface the error
+      setSaved(true)
+      setSaveError(`Local save only — ${err.message}`)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleDownload = () => {
@@ -81,6 +103,38 @@ export default function CharacterSheet({ sheet, transcript, onRestart }) {
         transform: entered ? 'translateY(0)' : 'translateY(20px)',
         transition: 'all 1s cubic-bezier(0.16, 1, 0.3, 1)',
       }}>
+        {/* Back to home */}
+        <div style={{ marginBottom: 40 }}>
+          <button
+            onClick={onRestart}
+            style={{
+              background: 'transparent',
+              border: '1px solid var(--border)',
+              color: 'var(--text-muted)',
+              padding: '10px 20px',
+              borderRadius: 8,
+              fontFamily: 'var(--mono)',
+              fontSize: 10,
+              letterSpacing: 3,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.borderColor = 'var(--accent)'
+              e.currentTarget.style.color = 'var(--accent)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.borderColor = 'var(--border)'
+              e.currentTarget.style.color = 'var(--text-muted)'
+            }}
+          >
+            ← BACK TO HOME
+          </button>
+        </div>
+
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
           <div style={{
@@ -286,35 +340,41 @@ export default function CharacterSheet({ sheet, transcript, onRestart }) {
           gap: 16,
           marginTop: 32,
           alignItems: 'center',
+          flexDirection: 'column',
         }}>
           {!saved ? (
             <button
               onClick={handleSave}
+              disabled={saving}
               style={{
-                background: 'var(--accent-dim)',
-                border: '1px solid var(--accent)',
-                color: 'var(--accent)',
+                background: saving ? 'var(--bg-card)' : 'var(--accent-dim)',
+                border: `1px solid ${saving ? 'var(--border)' : 'var(--accent)'}`,
+                color: saving ? 'var(--text-muted)' : 'var(--accent)',
                 padding: '14px 32px',
                 borderRadius: 8,
                 fontFamily: 'var(--mono)',
                 fontSize: 11,
                 letterSpacing: 3,
-                cursor: 'pointer',
+                cursor: saving ? 'default' : 'pointer',
                 transition: 'all 0.3s ease',
               }}
               onMouseEnter={e => {
-                e.target.style.background = '#00ff8830'
-                e.target.style.boxShadow = '0 0 30px #00ff8822'
+                if (!saving) {
+                  e.currentTarget.style.background = '#00ff8830'
+                  e.currentTarget.style.boxShadow = '0 0 30px #00ff8822'
+                }
               }}
               onMouseLeave={e => {
-                e.target.style.background = 'var(--accent-dim)'
-                e.target.style.boxShadow = 'none'
+                if (!saving) {
+                  e.currentTarget.style.background = 'var(--accent-dim)'
+                  e.currentTarget.style.boxShadow = 'none'
+                }
               }}
             >
-              SAVE
+              {saving ? 'SAVING...' : 'SAVE TO NETWORK'}
             </button>
           ) : (
-            <>
+            <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
               <div style={{
                 fontFamily: 'var(--mono)',
                 fontSize: 11,
@@ -339,17 +399,28 @@ export default function CharacterSheet({ sheet, transcript, onRestart }) {
                   transition: 'all 0.2s ease',
                 }}
                 onMouseEnter={e => {
-                  e.target.style.borderColor = 'var(--accent)'
-                  e.target.style.color = 'var(--accent)'
+                  e.currentTarget.style.borderColor = 'var(--accent)'
+                  e.currentTarget.style.color = 'var(--accent)'
                 }}
                 onMouseLeave={e => {
-                  e.target.style.borderColor = 'var(--border)'
-                  e.target.style.color = 'var(--text-muted)'
+                  e.currentTarget.style.borderColor = 'var(--border)'
+                  e.currentTarget.style.color = 'var(--text-muted)'
                 }}
               >
                 DOWNLOAD JSON
               </button>
-            </>
+            </div>
+          )}
+          {saveError && (
+            <div style={{
+              fontFamily: 'var(--mono)',
+              fontSize: 9,
+              color: '#ff336688',
+              letterSpacing: 1,
+              textAlign: 'center',
+            }}>
+              {saveError}
+            </div>
           )}
         </div>
 
@@ -459,26 +530,6 @@ export default function CharacterSheet({ sheet, transcript, onRestart }) {
           </div>
         )}
 
-        {/* Start over — subtle, at bottom */}
-        <div style={{ textAlign: 'center', marginTop: 32 }}>
-          <button
-            onClick={onRestart}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: '#333',
-              fontFamily: 'var(--mono)',
-              fontSize: 9,
-              letterSpacing: 2,
-              cursor: 'pointer',
-              padding: '8px 16px',
-            }}
-            onMouseEnter={e => e.target.style.color = 'var(--text-muted)'}
-            onMouseLeave={e => e.target.style.color = '#333'}
-          >
-            START OVER
-          </button>
-        </div>
 
         {/* Footer */}
         <div style={{
