@@ -100,7 +100,7 @@ function ComingSoonButton({ label }) {
   )
 }
 
-export default function Welcome({ onStart }) {
+export default function Welcome({ onStart, onStartVoice }) {
   const [entered, setEntered] = useState(false)
 
   useEffect(() => {
@@ -215,14 +215,31 @@ export default function Welcome({ onStart }) {
           </button>
 
           <div style={{ marginTop: 20, display: 'flex', justifyContent: 'center', gap: 24 }}>
-            <span style={{
-              fontFamily: 'var(--mono)',
-              fontSize: 9,
-              letterSpacing: 2,
-              color: '#666',
-            }}>
-              VOICE MODE — COMING SOON
-            </span>
+            <button
+              onClick={onStartVoice}
+              style={{
+                fontFamily: 'var(--mono)',
+                fontSize: 9,
+                letterSpacing: 2,
+                color: '#8866ff',
+                background: 'transparent',
+                border: '1px solid #8866ff44',
+                padding: '10px 24px',
+                borderRadius: 6,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={e => {
+                e.target.style.background = '#8866ff15'
+                e.target.style.borderColor = '#8866ff88'
+              }}
+              onMouseLeave={e => {
+                e.target.style.background = 'transparent'
+                e.target.style.borderColor = '#8866ff44'
+              }}
+            >
+              VOICE MODE
+            </button>
           </div>
 
           <div style={{
