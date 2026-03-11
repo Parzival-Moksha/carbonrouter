@@ -1,36 +1,130 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import NetworkCanvas from './NetworkCanvas'
 
 const SECTIONS = [
   {
     color: '#ff3366',
+    image: '/images/seg01.jpg',
     text: `To meet the right person at the right time could be life-changing. What if once-in-a-decade encounters could happen every week? Can AI improve on our current human connection stack of happenstance, word-of-mouth, plus LinkedIn?`,
+    animation: 'slideUp',
   },
   {
     color: '#00ff88',
+    image: '/images/seg02.jpg',
     text: `How many tokens does it take for an LLM to generate a high-resolution map of what makes you productive? Could we compute the highest expected synergy for sets of human interactions across hundreds of profiles in one context?`,
+    animation: 'slideRight',
   },
   {
     color: '#8866ff',
+    image: '/images/seg03.jpg',
     text: `Frontier LLMs can juggle rich preference manifolds of hundreds of people in their context, enabling high-dimensional instant sorting. SOTA LLMs with quality context engineering are the approximation algorithm killers. NP-hard no more.`,
+    animation: 'fadeScale',
   },
   {
     color: '#ffaa00',
+    image: '/images/seg04.jpg',
     text: `Opus scores your productivity, synergy, and complementarity across dozens of dimensions with SOUL.md's of other, pre-selected users and computes your highest scoring ideal monthly routing schedule.`,
+    animation: 'slideLeft',
   },
   {
     color: '#00ff88',
+    image: '/images/seg05.jpg',
     text: `The more data about you, the higher the routing resolution. Want your personal agent to handle your profile creation? Or do you have 10 minutes to talk to our curious agent per text or voice? Wanna do both? Let us get who you are and we'll email your ideal routing for next month.`,
+    animation: 'slideUp',
   },
   {
     color: '#8866ff',
+    image: '/images/seg06.jpg',
     text: `This is alpha, so just do a quick interview and recommend to 2 friends who you think would benefit from CarbonRouter. You'll hear from us when we know where to route you.`,
+    animation: 'fadeScale',
   },
   {
     color: '#ff3366',
+    image: '/images/seg07.jpg',
     text: `1.0 will give you great recommendations. v2.0 will route you better than you could. v3.0 will be your exocortex's motor neurons to his meat puppet.`,
+    animation: 'slideRight',
   },
 ]
+
+// Scroll-triggered section with background image
+function ScrollSection({ section, index }) {
+  const ref = useRef(null)
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true)
+          observer.unobserve(el)
+        }
+      },
+      { threshold: 0.15, rootMargin: '0px 0px -50px 0px' }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  const transforms = {
+    slideUp: visible ? 'translateY(0)' : 'translateY(60px)',
+    slideRight: visible ? 'translateX(0)' : 'translateX(-80px)',
+    slideLeft: visible ? 'translateX(0)' : 'translateX(80px)',
+    fadeScale: visible ? 'scale(1)' : 'scale(0.92)',
+  }
+
+  return (
+    <div
+      ref={ref}
+      style={{
+        position: 'relative',
+        borderRadius: 14,
+        overflow: 'hidden',
+        opacity: visible ? 1 : 0,
+        transform: transforms[section.animation],
+        transition: `all 0.9s cubic-bezier(0.16, 1, 0.3, 1) ${0.05 * index}s`,
+      }}
+    >
+      {/* Background image */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        backgroundImage: `url(${section.image})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        opacity: 0.2,
+        filter: 'brightness(0.7) saturate(0.8)',
+      }} />
+
+      {/* Gradient overlay */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        background: `linear-gradient(135deg, ${section.color}10 0%, var(--bg-card) 40%, var(--bg-card) 100%)`,
+      }} />
+
+      {/* Content */}
+      <div style={{
+        position: 'relative',
+        padding: '28px 32px',
+        borderLeft: `3px solid ${section.color}`,
+        border: '1px solid var(--border)',
+        borderRadius: 14,
+      }}>
+        <p style={{
+          fontSize: 14,
+          lineHeight: 1.85,
+          color: 'var(--text-dim)',
+          fontWeight: 300,
+        }}>
+          {section.text}
+        </p>
+      </div>
+    </div>
+  )
+}
 
 function GlitchText({ text }) {
   const [display, setDisplay] = useState(text)
@@ -117,12 +211,15 @@ export default function Welcome({ onStart, onStartVoice }) {
         maxWidth: 720,
         margin: '0 auto',
         padding: '80px 32px 60px',
-        opacity: entered ? 1 : 0,
-        transform: entered ? 'translateY(0)' : 'translateY(20px)',
-        transition: 'all 1s cubic-bezier(0.16, 1, 0.3, 1)',
       }}>
         {/* Header */}
-        <div style={{ marginBottom: 64, textAlign: 'center' }}>
+        <div style={{
+          marginBottom: 64,
+          textAlign: 'center',
+          opacity: entered ? 1 : 0,
+          transform: entered ? 'translateY(0)' : 'translateY(20px)',
+          transition: 'all 1s cubic-bezier(0.16, 1, 0.3, 1)',
+        }}>
           <div style={{
             fontFamily: 'var(--mono)',
             fontSize: 10,
@@ -153,31 +250,10 @@ export default function Welcome({ onStart, onStartVoice }) {
           </div>
         </div>
 
-        {/* Pitch sections */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        {/* Pitch sections with scroll animations */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           {SECTIONS.map((s, i) => (
-            <div
-              key={i}
-              style={{
-                padding: '22px 28px',
-                background: 'var(--bg-card)',
-                border: '1px solid var(--border)',
-                borderRadius: 10,
-                borderLeft: `3px solid ${s.color}`,
-                opacity: entered ? 1 : 0,
-                transform: entered ? 'translateY(0)' : 'translateY(16px)',
-                transition: `all 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${0.3 + i * 0.12}s`,
-              }}
-            >
-              <p style={{
-                fontSize: 14,
-                lineHeight: 1.85,
-                color: 'var(--text-dim)',
-                fontWeight: 300,
-              }}>
-                {s.text}
-              </p>
-            </div>
+            <ScrollSection key={i} section={s} index={i} />
           ))}
         </div>
 

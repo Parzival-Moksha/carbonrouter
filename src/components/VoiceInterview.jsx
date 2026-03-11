@@ -96,9 +96,7 @@ export default function VoiceInterview({ onComplete }) {
   const wsRef = useRef(null)
   const audioContextRef = useRef(null)
   const micStreamRef = useRef(null)
-  const workletNodeRef = useRef(null)
-  const playbackQueueRef = useRef([])
-  const isPlayingRef = useRef(false)
+  const nextPlayTimeRef = useRef(0)
   const currentAgentTextRef = useRef('')
 
   useEffect(() => {
@@ -121,9 +119,10 @@ export default function VoiceInterview({ onComplete }) {
     }
   }, [])
 
-  // Play queued audio chunks
+  // Play audio chunks sequentially by scheduling at the right time
   const playAudioChunk = useCallback((base64Audio) => {
-    if (!audioContextRef.current) return
+    const ctx = audioContextRef.current
+    if (!ctx) return
 
     const raw = atob(base64Audio)
     const bytes = new Uint8Array(raw.length)
@@ -136,13 +135,18 @@ export default function VoiceInterview({ onComplete }) {
       float32[i] = int16[i] / 32768
     }
 
-    const buffer = audioContextRef.current.createBuffer(1, float32.length, SAMPLE_RATE)
+    const buffer = ctx.createBuffer(1, float32.length, SAMPLE_RATE)
     buffer.getChannelData(0).set(float32)
 
-    const source = audioContextRef.current.createBufferSource()
+    const source = ctx.createBufferSource()
     source.buffer = buffer
-    source.connect(audioContextRef.current.destination)
-    source.start()
+    source.connect(ctx.destination)
+
+    // Schedule this chunk right after the previous one ends
+    const now = ctx.currentTime
+    const startAt = Math.max(nextPlayTimeRef.current, now)
+    source.start(startAt)
+    nextPlayTimeRef.current = startAt + buffer.duration
   }, [])
 
   // Start mic capture and send audio via WebSocket
@@ -268,9 +272,11 @@ export default function VoiceInterview({ onComplete }) {
           },
         }))
 
-        // Start mic
+        // Start mic, then trigger agent to speak first
         startMicCapture().then(() => {
-          setStatus('listening')
+          setStatus('speaking')
+          // Agent takes the first turn
+          ws.send(JSON.stringify({ type: 'response.create' }))
         })
       }
 
@@ -278,6 +284,11 @@ export default function VoiceInterview({ onComplete }) {
         const msg = JSON.parse(event.data)
 
         switch (msg.type) {
+          case 'response.created':
+            // Reset playback schedule for new response
+            nextPlayTimeRef.current = 0
+            break
+
           case 'response.output_audio.delta':
             playAudioChunk(msg.delta)
             setIsAgentSpeaking(true)
