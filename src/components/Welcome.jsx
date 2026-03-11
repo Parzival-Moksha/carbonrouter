@@ -5,43 +5,43 @@ const SECTIONS = [
   {
     color: '#ff3366',
     image: '/images/seg01.jpg',
-    text: `To meet the right person at the right time could be life-changing. What if once-in-a-decade encounters could happen every week?`,
-    effect: 'parallax', // bg fixed, text scrolls over
+    text: `To meet the right person at the right time could be life-changing. What if once-in-a-decade encounters could happen every week? Can AI improve on our current human connection stack of happenstance, word-of-mouth, plus LinkedIn?`,
+    effect: 'parallax',
   },
   {
     color: '#00ff88',
     image: '/images/seg02.jpg',
-    text: `How many tokens does it take for an LLM to generate a high-resolution map of what makes you productive?`,
-    effect: 'reveal', // next section slides up revealing this fixed section
+    text: `How many tokens does it take for an LLM to generate a high-resolution map of what makes you productive? Could we compute the highest expected synergy for sets of human interactions across hundreds of profiles in one context?`,
+    effect: 'reveal',
   },
   {
     color: '#8866ff',
     image: '/images/seg03.jpg',
-    text: `Frontier LLMs can juggle rich preference manifolds of hundreds of people in their context. NP-hard no more.`,
-    effect: 'zoom', // zooms in from distance
+    text: `Frontier LLMs can juggle rich preference manifolds of hundreds of people in their context, enabling high-dimensional instant sorting. SOTA LLMs with quality context engineering are the approximation algorithm killers. NP-hard no more.`,
+    effect: 'zoom',
   },
   {
     color: '#ffaa00',
     image: '/images/seg04.jpg',
-    text: `Opus scores your synergy across dozens of dimensions and computes your ideal monthly routing schedule.`,
+    text: `Opus scores your productivity, synergy, and complementarity across dozens of dimensions with SOUL.md's of other, pre-selected users and computes your highest scoring ideal monthly routing schedule.`,
     effect: 'parallax',
   },
   {
     color: '#00ff88',
     image: '/images/seg05.jpg',
-    text: `The more data about you, the higher the routing resolution. 10 minutes with our agent. That's all it takes.`,
+    text: `The more data about you, the higher the routing resolution. Want your personal agent to handle your profile creation? Or do you have 10 minutes to talk to our curious agent per text or voice? Wanna do both? Let us get who you are and we'll email your ideal routing for next month.`,
     effect: 'reveal',
   },
   {
     color: '#8866ff',
     image: '/images/seg06.jpg',
-    text: `This is alpha. Do a quick interview and recommend 2 friends. You'll hear from us when we find your routes.`,
+    text: `This is alpha, so just do a quick interview and recommend to 2 friends who you think would benefit from CarbonRouter. You'll hear from us when we know where to route you.`,
     effect: 'slideUp',
   },
   {
     color: '#ff3366',
     image: '/images/seg07.jpg',
-    text: `v1.0 gives great recommendations. v2.0 routes you better than you could. v3.0 is your exocortex.`,
+    text: `1.0 will give you great recommendations. v2.0 will route you better than you could. v3.0 will be your exocortex's motor neurons to his meat puppet.`,
     effect: 'zoom',
   },
 ]
@@ -116,6 +116,7 @@ function FullSection({ section, index }) {
   return (
     <div
       ref={ref}
+      data-section={index + 1}
       style={{
         height: '100vh',
         width: '100%',
@@ -265,17 +266,129 @@ function ComingSoonButton({ label }) {
   )
 }
 
+// Pill navigation — fixed left side
+function PillNav({ currentSection, totalSections }) {
+  // totalSections + 2: hero (0), sections (1..N), CTA (N+1)
+  const total = totalSections + 2
+  const pills = Array.from({ length: total }, (_, i) => i)
+
+  return (
+    <div style={{
+      position: 'fixed',
+      left: 24,
+      top: '50%',
+      transform: 'translateY(-50%)',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: 8,
+      zIndex: 100,
+    }}>
+      {pills.map(i => {
+        const isActive = i === currentSection
+        const color = i === 0 ? '#fff'
+          : i === total - 1 ? '#00ff88'
+          : SECTIONS[i - 1]?.color || '#666'
+
+        return (
+          <div
+            key={i}
+            style={{
+              width: isActive ? 6 : 4,
+              height: isActive ? 24 : 12,
+              borderRadius: 3,
+              background: isActive ? color : '#333',
+              boxShadow: isActive ? `0 0 8px ${color}66` : 'none',
+              transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+              cursor: 'pointer',
+            }}
+            onClick={() => {
+              const targets = document.querySelectorAll('[data-section]')
+              targets[i]?.scrollIntoView({ behavior: 'smooth' })
+            }}
+          />
+        )
+      })}
+    </div>
+  )
+}
+
 export default function Welcome({ onStart, onStartVoice }) {
   const [entered, setEntered] = useState(false)
+  const [currentSection, setCurrentSection] = useState(0)
+  const [showEnterButton, setShowEnterButton] = useState(false)
 
   useEffect(() => {
     requestAnimationFrame(() => setEntered(true))
   }, [])
 
+  // Track which section is currently in view
+  useEffect(() => {
+    const sections = document.querySelectorAll('[data-section]')
+    if (!sections.length) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const idx = parseInt(entry.target.getAttribute('data-section'))
+            setCurrentSection(idx)
+            // Show ENTER button after scrolling past hero
+            setShowEnterButton(idx > 0)
+          }
+        })
+      },
+      { threshold: 0.5 }
+    )
+
+    sections.forEach(s => observer.observe(s))
+    return () => observer.disconnect()
+  }, [entered])
+
   return (
     <div style={{ background: '#0a0a1a' }}>
-      {/* Hero section — full viewport */}
+      <PillNav currentSection={currentSection} totalSections={SECTIONS.length} />
+
+      {/* Sticky ENTER button — top right, appears after hero */}
       <div style={{
+        position: 'fixed',
+        top: 24,
+        right: 24,
+        zIndex: 100,
+        opacity: showEnterButton ? 1 : 0,
+        transform: showEnterButton ? 'translateY(0)' : 'translateY(-20px)',
+        transition: 'all 0.4s ease',
+        pointerEvents: showEnterButton ? 'auto' : 'none',
+      }}>
+        <button
+          onClick={onStart}
+          style={{
+            background: '#00ff8818',
+            border: '1px solid #00ff8844',
+            color: '#00ff88',
+            padding: '10px 24px',
+            borderRadius: 6,
+            fontFamily: 'var(--mono)',
+            fontSize: 10,
+            letterSpacing: 3,
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            backdropFilter: 'blur(12px)',
+          }}
+          onMouseEnter={e => {
+            e.target.style.background = '#00ff8830'
+            e.target.style.boxShadow = '0 0 20px #00ff8822'
+          }}
+          onMouseLeave={e => {
+            e.target.style.background = '#00ff8818'
+            e.target.style.boxShadow = 'none'
+          }}
+        >
+          ENTER
+        </button>
+      </div>
+      {/* Hero section — full viewport */}
+      <div data-section="0" style={{
         height: '100vh',
         position: 'relative',
         display: 'flex',
@@ -358,7 +471,7 @@ export default function Welcome({ onStart, onStartVoice }) {
       ))}
 
       {/* CTA section — full viewport */}
-      <div style={{
+      <div data-section={SECTIONS.length + 1} style={{
         minHeight: '100vh',
         position: 'relative',
         display: 'flex',
