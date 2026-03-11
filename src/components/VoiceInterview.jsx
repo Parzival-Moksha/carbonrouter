@@ -123,6 +123,9 @@ export default function VoiceInterview({ onComplete }) {
   const currentAgentTextRef = useRef('')
   const sessionConfiguredRef = useRef(false)
   const transcriptRef = useRef([])
+  // Track current user turn — accumulate all speech segments into ONE entry
+  const userTurnActiveRef = useRef(false)
+  const userEntryIndexRef = useRef(-1)
 
   // Playback queue (cookbook pattern: queue + onended chaining)
   const playbackQueueRef = useRef([])
@@ -405,38 +408,40 @@ export default function VoiceInterview({ onComplete }) {
               const finalText = currentAgentTextRef.current
               setTranscript(prev => [...prev, { role: 'assistant', text: finalText }])
               currentAgentTextRef.current = ''
-              // Delay clearing current transcript so user can read it
               setTimeout(() => setCurrentTranscript(''), 2000)
             }
+            // Reset user turn accumulator — ready for next user speech
+            userTurnActiveRef.current = false
+            userEntryIndexRef.current = -1
             setStatus('listening')
             break
 
-          // User started speaking → interrupt agent, add placeholder
+          // User started speaking → interrupt agent, ONE placeholder for entire turn
           case 'input_audio_buffer.speech_started':
             stopPlayback()
             setStatus('listening')
-            setTranscript(prev => {
-              // Only add placeholder if last entry isn't already a user placeholder
-              if (prev.length > 0 && prev[prev.length - 1].role === 'user' && prev[prev.length - 1].text === '...') return prev
-              return [...prev, { role: 'user', text: '...' }]
-            })
+            if (!userTurnActiveRef.current) {
+              userTurnActiveRef.current = true
+              setTranscript(prev => {
+                userEntryIndexRef.current = prev.length
+                return [...prev, { role: 'user', text: '...' }]
+              })
+            }
             break
 
-          // User transcript finalized — update the placeholder, don't append duplicates
+          // User transcript segment — accumulate into the single turn entry
           case 'conversation.item.added':
             if (msg.item?.role === 'user' && msg.item?.content) {
               for (const c of msg.item.content) {
                 if (c.type === 'input_audio' && c.transcript) {
                   setTranscript(prev => {
                     const updated = [...prev]
-                    // Find last user entry and update it
-                    for (let i = updated.length - 1; i >= 0; i--) {
-                      if (updated[i].role === 'user') {
-                        updated[i] = { role: 'user', text: c.transcript }
-                        return updated
-                      }
+                    const idx = userEntryIndexRef.current
+                    if (idx >= 0 && idx < updated.length) {
+                      const existing = updated[idx].text === '...' ? '' : updated[idx].text
+                      updated[idx] = { role: 'user', text: (existing ? existing + ' ' : '') + c.transcript }
                     }
-                    return [...prev, { role: 'user', text: c.transcript }]
+                    return updated
                   })
                   break
                 }
