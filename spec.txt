@@ -41,22 +41,24 @@ MATCH NAMING (alternatives to "matches"):
 - harmonics
 
 PRIVACY TIERS:
-1. Full anonymous — user sees only synergy report, no identity
+1. Full anonymous — user sees only route-together proposal, no identity revealed to any user
 2. Mutual reveal — if both users accept a route-together proposal, contacts reveal
-3. Open — full profile visible to matched users
+3. Open — contact visible to all users with a route-together proposal (above a certain synergy score)
 
 POST-INTERVIEW FLOW:
 1. Interview ends (resolution >= 0.85 or turn >= 12 or user clicks finish)
 2. Character sheet generated and displayed
 3. Contact collection: "Where should we reach you when we find your routes?"
 4. Consent: "May we include you in other users' routing computations?"
-5. Save & download
+5. Save & download - i mean a save button first, and when its saved, we can then display a not so super prominent and flashy download button.
 
 ROADMAP:
 v0.1.0 — Character sheet crafter (AI interview, text + voice)
-v0.2.0 — Multi-profile matching engine (Opus ranks N profiles pairwise)
-v0.3.0 — Routing schedule generation (spatiotemporal optimization)
-v0.5.0 — Google Calendar integration, agent-to-agent data gathering
-v1.0.0 — Post-encounter feedback loop (update character sheets from interaction data)
-v2.0.0 — Autonomous routing (the system routes better than you could)
-v3.0.0 — Exocortex integration (your AI agent negotiates on your behalf)
+v0.2.0 — Multi-profile matching engine
+v0.3.0 — Interactive, high synergy route proposals in-app with one-time email auth and chat
+v0.4.0 — agent-to-agent data gathering
+v0.5.0 — Integration of Google Calendar + more apps
+v0.6.0 — multi-route synergy calculation algorithm with high resolution simulations for groups and pairs of synergs
+v1.0.0 — Post-encounter feedback loop (update character sheets from interaction data), 
+v2.0.0 — Carbonrouter proactively sends you routing updates so good that you start accepting them by default.
+v3.0.0 — Exocortex: merging to the Everything App 

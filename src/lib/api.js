@@ -18,7 +18,7 @@ export async function streamChat(messages, apiKey, onChunk) {
         ...messages,
       ],
       stream: true,
-      max_tokens: 1024,
+      max_tokens: 16386,
       temperature: 0.7,
     }),
   })

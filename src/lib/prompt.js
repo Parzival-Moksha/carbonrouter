@@ -68,20 +68,15 @@ ROUTING VARIABLES:
 
 // Strip metadata blocks from text during streaming (live, character by character)
 export function stripMetaFromStreaming(text) {
-  // Remove completed code blocks
-  let clean = text.replace(/```json\s*\n[\s\S]*?\n```/g, '').replace(/```charactersheet\s*\n[\s\S]*?\n```/g, '')
+  // Remove completed json and charactersheet code blocks
+  let clean = text.replace(/```json\s*[\s\S]*?```/g, '').replace(/```charactersheet\s*[\s\S]*?```/g, '')
 
-  // If there's an unclosed ``` block starting, truncate there
-  const lastTripleBacktick = clean.lastIndexOf('```')
-  if (lastTripleBacktick !== -1) {
-    // Check if it's an unclosed block (odd number of ``` occurrences)
-    const before = clean.slice(0, lastTripleBacktick)
-    const after = clean.slice(lastTripleBacktick)
-    const closingMatch = after.match(/```[\s\S]*?```/)
-    if (!closingMatch) {
-      // Unclosed block — truncate
-      clean = before.trim()
-    }
+  // If there's an unclosed ``` block, truncate everything from it onwards
+  // Count all ``` occurrences — if odd count, the last one is unclosed
+  const matches = [...clean.matchAll(/```/g)]
+  if (matches.length % 2 !== 0) {
+    const lastOpen = matches[matches.length - 1].index
+    clean = clean.slice(0, lastOpen).trim()
   }
 
   return clean.trim()

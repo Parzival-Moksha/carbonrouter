@@ -35,18 +35,22 @@ export default function CharacterSheet({ sheet, transcript, onRestart }) {
     requestAnimationFrame(() => setEntered(true))
   }, [])
 
-  const handleSave = () => {
-    const data = {
-      characterSheet: sheet,
-      transcript: transcript.map(m => ({ role: m.role, content: m.content })),
-      email: email || null,
-      consentTier: consent,
-      archetype: parsed.archetype,
-      createdAt: new Date().toISOString(),
-    }
-    localStorage.setItem('carbonrouter_profile', JSON.stringify(data))
+  const getSaveData = () => ({
+    characterSheet: sheet,
+    transcript: transcript.map(m => ({ role: m.role, content: m.content })),
+    email: email || null,
+    consentTier: consent,
+    archetype: parsed.archetype,
+    createdAt: new Date().toISOString(),
+  })
 
-    // Download
+  const handleSave = () => {
+    localStorage.setItem('carbonrouter_profile', JSON.stringify(getSaveData()))
+    setSaved(true)
+  }
+
+  const handleDownload = () => {
+    const data = getSaveData()
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -54,13 +58,12 @@ export default function CharacterSheet({ sheet, transcript, onRestart }) {
     a.download = `carbonrouter-preferences-${Date.now()}.json`
     a.click()
     URL.revokeObjectURL(url)
-    setSaved(true)
   }
 
   const consentOptions = [
     { id: 'anonymous', label: 'ANONYMOUS', desc: 'Include me in routing, but never reveal my identity' },
     { id: 'mutual', label: 'MUTUAL REVEAL', desc: 'Reveal contacts only if both users accept a route' },
-    { id: 'open', label: 'OPEN', desc: 'Let matched users see my profile directly' },
+    { id: 'open', label: 'OPEN', desc: 'Contact visible to all users with a routing proposal above a certain synergy score' },
   ]
 
   return (
@@ -281,6 +284,7 @@ export default function CharacterSheet({ sheet, transcript, onRestart }) {
           justifyContent: 'center',
           gap: 16,
           marginTop: 32,
+          alignItems: 'center',
         }}>
           {!saved ? (
             <button
@@ -306,18 +310,45 @@ export default function CharacterSheet({ sheet, transcript, onRestart }) {
                 e.target.style.boxShadow = 'none'
               }}
             >
-              SAVE & DOWNLOAD
+              SAVE
             </button>
           ) : (
-            <div style={{
-              fontFamily: 'var(--mono)',
-              fontSize: 11,
-              letterSpacing: 2,
-              color: 'var(--accent)',
-              padding: '14px 32px',
-            }}>
-              SAVED — you'll hear from us when we know where to route you.
-            </div>
+            <>
+              <div style={{
+                fontFamily: 'var(--mono)',
+                fontSize: 11,
+                letterSpacing: 2,
+                color: 'var(--accent)',
+                padding: '14px 0',
+              }}>
+                SAVED
+              </div>
+              <button
+                onClick={handleDownload}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid var(--border)',
+                  color: 'var(--text-muted)',
+                  padding: '10px 20px',
+                  borderRadius: 8,
+                  fontFamily: 'var(--mono)',
+                  fontSize: 9,
+                  letterSpacing: 2,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={e => {
+                  e.target.style.borderColor = 'var(--accent)'
+                  e.target.style.color = 'var(--accent)'
+                }}
+                onMouseLeave={e => {
+                  e.target.style.borderColor = 'var(--border)'
+                  e.target.style.color = 'var(--text-muted)'
+                }}
+              >
+                DOWNLOAD
+              </button>
+            </>
           )}
 
           <button

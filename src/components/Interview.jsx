@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { streamChat } from '../lib/api.js'
 import { parseResponse, stripMetaFromStreaming, FIRST_MESSAGE } from '../lib/prompt.js'
+import NetworkCanvas from './NetworkCanvas'
 
 const API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || ''
 
@@ -235,7 +236,9 @@ export default function Interview({ onComplete }) {
       minHeight: '100vh',
       display: 'flex',
       background: 'var(--bg)',
+      position: 'relative',
     }}>
+      <NetworkCanvas opacity={0.15} nodeCount={30} />
       <style>{`
         @keyframes blink {
           0%, 50% { opacity: 1; }
@@ -253,6 +256,11 @@ export default function Interview({ onComplete }) {
         alignItems: 'center',
         gap: 24,
         flexShrink: 0,
+        position: 'sticky',
+        top: 0,
+        height: '100vh',
+        overflowY: 'auto',
+        zIndex: 1,
       }}>
         <div style={{
           fontFamily: 'var(--mono)',
@@ -313,6 +321,8 @@ export default function Interview({ onComplete }) {
         display: 'flex',
         flexDirection: 'column',
         maxWidth: 760,
+        position: 'relative',
+        zIndex: 1,
       }}>
         {/* Messages */}
         <div style={{

@@ -236,6 +236,58 @@ export default function Welcome({ onStart }) {
           </div>
         </div>
 
+        {/* Roadmap */}
+        <div style={{
+          marginTop: 56,
+          padding: '28px 28px',
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border)',
+          borderRadius: 10,
+          borderLeft: '3px solid #ffaa00',
+        }}>
+          <div style={{
+            fontFamily: 'var(--mono)',
+            fontSize: 9,
+            letterSpacing: 4,
+            color: '#ffaa00',
+            marginBottom: 20,
+          }}>
+            ROADMAP
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {[
+              { v: 'v0.1', label: 'Character sheet crafter (AI interview, text + voice)', active: true },
+              { v: 'v0.2', label: 'Multi-profile matching engine' },
+              { v: 'v0.3', label: 'Interactive route proposals with one-time email auth and chat' },
+              { v: 'v0.4', label: 'Agent-to-agent data gathering' },
+              { v: 'v0.5', label: 'Google Calendar + more app integrations' },
+              { v: 'v0.6', label: 'Multi-route synergy calculation with high-res simulations' },
+              { v: 'v1.0', label: 'Post-encounter feedback loop — character sheets update from interaction data' },
+              { v: 'v2.0', label: 'Proactive routing updates so good you accept them by default' },
+              { v: 'v3.0', label: 'Exocortex — merging to the Everything App' },
+            ].map((item, i) => (
+              <div key={i} style={{ display: 'flex', gap: 14, alignItems: 'baseline' }}>
+                <span style={{
+                  fontFamily: 'var(--mono)',
+                  fontSize: 10,
+                  color: item.active ? '#00ff88' : 'var(--text-muted)',
+                  minWidth: 36,
+                  letterSpacing: 0.5,
+                }}>
+                  {item.v}
+                </span>
+                <span style={{
+                  fontSize: 12,
+                  color: item.active ? 'var(--text)' : '#555',
+                  fontWeight: 300,
+                }}>
+                  {item.label} {item.active && '←'}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Footer */}
         <div style={{
           marginTop: 64,
