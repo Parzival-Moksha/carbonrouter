@@ -1,7 +1,7 @@
 import { SYSTEM_PROMPT } from './prompt.js'
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
-const MODEL = 'anthropic/claude-opus-4' // Opus for maximum IQ
+const MODEL = 'anthropic/claude-opus-4-6' // Opus 4.6 for maximum IQ
 
 export async function streamChat(messages, apiKey, onChunk) {
   const res = await fetch(OPENROUTER_URL, {

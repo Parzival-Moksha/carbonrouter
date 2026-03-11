@@ -6,14 +6,12 @@ function parseSheet(raw) {
   let profile = raw
   let routingVars = null
 
-  // Extract archetype
   const archMatch = raw.match(/ARCHETYPE:\s*(.+)/)
   if (archMatch) {
     archetype = archMatch[1].trim()
     profile = profile.replace(/ARCHETYPE:\s*.+\n?/, '').trim()
   }
 
-  // Extract routing variables
   const routingMatch = profile.match(/ROUTING VARIABLES:\s*\n([\s\S]+)$/i)
   if (routingMatch) {
     routingVars = routingMatch[1].trim().split('\n').map(l => {
@@ -28,22 +26,27 @@ function parseSheet(raw) {
 
 export default function CharacterSheet({ sheet, transcript, onRestart }) {
   const [entered, setEntered] = useState(false)
+  const [email, setEmail] = useState('')
+  const [consent, setConsent] = useState('mutual') // anonymous | mutual | open
+  const [saved, setSaved] = useState(false)
   const parsed = parseSheet(sheet)
 
   useEffect(() => {
     requestAnimationFrame(() => setEntered(true))
   }, [])
 
-  const handleSaveToNetwork = () => {
-    // For now, save to localStorage
+  const handleSave = () => {
     const data = {
       characterSheet: sheet,
       transcript: transcript.map(m => ({ role: m.role, content: m.content })),
+      email: email || null,
+      consentTier: consent,
+      archetype: parsed.archetype,
       createdAt: new Date().toISOString(),
     }
     localStorage.setItem('carbonrouter_profile', JSON.stringify(data))
 
-    // Also offer download
+    // Download
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -51,7 +54,14 @@ export default function CharacterSheet({ sheet, transcript, onRestart }) {
     a.download = `carbonrouter-preferences-${Date.now()}.json`
     a.click()
     URL.revokeObjectURL(url)
+    setSaved(true)
   }
+
+  const consentOptions = [
+    { id: 'anonymous', label: 'ANONYMOUS', desc: 'Include me in routing, but never reveal my identity' },
+    { id: 'mutual', label: 'MUTUAL REVEAL', desc: 'Reveal contacts only if both users accept a route' },
+    { id: 'open', label: 'OPEN', desc: 'Let matched users see my profile directly' },
+  ]
 
   return (
     <div style={{ minHeight: '100vh', position: 'relative' }}>
@@ -148,11 +158,7 @@ export default function CharacterSheet({ sheet, transcript, onRestart }) {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {parsed.routingVars.map((rv, i) => (
-                <div key={i} style={{
-                  display: 'flex',
-                  gap: 12,
-                  fontSize: 13,
-                }}>
+                <div key={i} style={{ display: 'flex', gap: 12, fontSize: 13 }}>
                   <span style={{
                     fontFamily: 'var(--mono)',
                     fontSize: 10,
@@ -162,10 +168,7 @@ export default function CharacterSheet({ sheet, transcript, onRestart }) {
                   }}>
                     {rv.key}
                   </span>
-                  <span style={{
-                    color: 'var(--text-dim)',
-                    fontWeight: 300,
-                  }}>
+                  <span style={{ color: 'var(--text-dim)', fontWeight: 300 }}>
                     {rv.value}
                   </span>
                 </div>
@@ -174,33 +177,101 @@ export default function CharacterSheet({ sheet, transcript, onRestart }) {
           </div>
         )}
 
-        {/* Network status */}
+        {/* Contact & Consent */}
         <div style={{
-          padding: '24px 28px',
+          padding: '28px 28px',
           background: 'var(--bg-card)',
           border: '1px solid var(--border)',
           borderRadius: 12,
           marginBottom: 24,
           borderLeft: '3px solid var(--accent)',
-          textAlign: 'center',
         }}>
           <div style={{
             fontFamily: 'var(--mono)',
             fontSize: 9,
             letterSpacing: 4,
             color: 'var(--accent)',
-            marginBottom: 12,
+            marginBottom: 20,
           }}>
-            NETWORK STATUS
+            JOIN THE NETWORK
           </div>
-          <div style={{
-            fontSize: 13,
-            color: 'var(--text-dim)',
-            lineHeight: 1.8,
-            fontWeight: 300,
-          }}>
-            Your preferences file is ready for the network.<br />
-            When enough nodes are connected, we'll compute your first routing schedule.
+
+          {/* Email */}
+          <div style={{ marginBottom: 24 }}>
+            <div style={{
+              fontSize: 13,
+              color: 'var(--text-dim)',
+              marginBottom: 10,
+              fontWeight: 300,
+            }}>
+              Where should we reach you when we find your routes?
+            </div>
+            <input
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder="your@email.com"
+              style={{
+                width: '100%',
+                background: 'var(--bg)',
+                border: '1px solid var(--border)',
+                borderRadius: 8,
+                color: 'var(--text)',
+                padding: '12px 16px',
+                fontSize: 14,
+                fontWeight: 300,
+                outline: 'none',
+                transition: 'border-color 0.2s ease',
+              }}
+              onFocus={e => e.target.style.borderColor = '#00ff8866'}
+              onBlur={e => e.target.style.borderColor = 'var(--border)'}
+            />
+          </div>
+
+          {/* Consent tiers */}
+          <div>
+            <div style={{
+              fontSize: 13,
+              color: 'var(--text-dim)',
+              marginBottom: 12,
+              fontWeight: 300,
+            }}>
+              May we include you in other users' routing computations?
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {consentOptions.map(opt => (
+                <button
+                  key={opt.id}
+                  onClick={() => setConsent(opt.id)}
+                  style={{
+                    background: consent === opt.id ? '#00ff8812' : 'transparent',
+                    border: `1px solid ${consent === opt.id ? '#00ff8844' : 'var(--border)'}`,
+                    borderRadius: 8,
+                    padding: '12px 16px',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <div style={{
+                    fontFamily: 'var(--mono)',
+                    fontSize: 10,
+                    letterSpacing: 2,
+                    color: consent === opt.id ? 'var(--accent)' : 'var(--text-muted)',
+                    marginBottom: 4,
+                  }}>
+                    {consent === opt.id ? '● ' : '○ '}{opt.label}
+                  </div>
+                  <div style={{
+                    fontSize: 12,
+                    color: '#666',
+                    fontWeight: 300,
+                  }}>
+                    {opt.desc}
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -211,31 +282,43 @@ export default function CharacterSheet({ sheet, transcript, onRestart }) {
           gap: 16,
           marginTop: 32,
         }}>
-          <button
-            onClick={handleSaveToNetwork}
-            style={{
-              background: 'var(--accent-dim)',
-              border: '1px solid var(--accent)',
-              color: 'var(--accent)',
-              padding: '14px 32px',
-              borderRadius: 8,
+          {!saved ? (
+            <button
+              onClick={handleSave}
+              style={{
+                background: 'var(--accent-dim)',
+                border: '1px solid var(--accent)',
+                color: 'var(--accent)',
+                padding: '14px 32px',
+                borderRadius: 8,
+                fontFamily: 'var(--mono)',
+                fontSize: 11,
+                letterSpacing: 3,
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+              }}
+              onMouseEnter={e => {
+                e.target.style.background = '#00ff8830'
+                e.target.style.boxShadow = '0 0 30px #00ff8822'
+              }}
+              onMouseLeave={e => {
+                e.target.style.background = 'var(--accent-dim)'
+                e.target.style.boxShadow = 'none'
+              }}
+            >
+              SAVE & DOWNLOAD
+            </button>
+          ) : (
+            <div style={{
               fontFamily: 'var(--mono)',
               fontSize: 11,
-              letterSpacing: 3,
-              cursor: 'pointer',
-              transition: 'all 0.3s ease',
-            }}
-            onMouseEnter={e => {
-              e.target.style.background = '#00ff8830'
-              e.target.style.boxShadow = '0 0 30px #00ff8822'
-            }}
-            onMouseLeave={e => {
-              e.target.style.background = 'var(--accent-dim)'
-              e.target.style.boxShadow = 'none'
-            }}
-          >
-            SAVE & DOWNLOAD
-          </button>
+              letterSpacing: 2,
+              color: 'var(--accent)',
+              padding: '14px 32px',
+            }}>
+              SAVED — you'll hear from us when we know where to route you.
+            </div>
+          )}
 
           <button
             onClick={onRestart}

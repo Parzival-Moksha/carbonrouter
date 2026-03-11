@@ -3,20 +3,32 @@ import NetworkCanvas from './NetworkCanvas'
 
 const SECTIONS = [
   {
+    color: '#ff3366',
+    text: `To meet the right person at the right time could be life-changing. What if once-in-a-decade encounters could happen every week? Can AI improve on our current human connection stack of happenstance, word-of-mouth, plus LinkedIn?`,
+  },
+  {
     color: '#00ff88',
-    text: `Frontier LLMs can juggle rich preference manifolds of hundreds of people in their context, enabling high-dimensional instant sorting. SOTA LLMs are the approximation algorithm killers. NP-hard no more.`,
+    text: `How many tokens does it take for an LLM to generate a high-resolution map of what makes you productive? Could we compute the highest expected synergy for sets of human interactions across hundreds of profiles in one context?`,
   },
   {
     color: '#8866ff',
-    text: `Opus can consider your 'character sheet', output productivity scores of hundreds of simulated interactions with other users, rate those interactions for cost/benefit, and compute your ideal spatiotemporal routing for serendipitymaxxing.`,
+    text: `Frontier LLMs can juggle rich preference manifolds of hundreds of people in their context, enabling high-dimensional instant sorting. SOTA LLMs with quality context engineering are the approximation algorithm killers. NP-hard no more.`,
   },
   {
     color: '#ffaa00',
-    text: `The more data about you, the higher the routing resolution. Want your agent to handle our character sheet crafting? Or do you have 10 minutes to talk to our curious agent per text or voice? Wanna do both? Let us get who you are and we'll email your ideal next month's schedule.`,
+    text: `Opus scores your productivity, synergy, and complementarity across dozens of dimensions with SOUL.md's of other, pre-selected users and computes your highest scoring ideal monthly routing schedule.`,
+  },
+  {
+    color: '#00ff88',
+    text: `The more data about you, the higher the routing resolution. Want your personal agent to handle your profile creation? Or do you have 10 minutes to talk to our curious agent per text or voice? Wanna do both? Let us get who you are and we'll email your ideal routing for next month.`,
+  },
+  {
+    color: '#8866ff',
+    text: `This is alpha, so just do a quick interview and recommend to 2 friends who you think would benefit from CarbonRouter. You'll hear from us when we know where to route you.`,
   },
   {
     color: '#ff3366',
-    text: `1.0 will give you great recommendations. v2.0 will route you better than you could. v3.0 will be your exocortex' motor neurons to his meat puppet.`,
+    text: `1.0 will give you great recommendations. v2.0 will route you better than you could. v3.0 will be your exocortex's motor neurons to his meat puppet.`,
   },
 ]
 
@@ -142,19 +154,19 @@ export default function Welcome({ onStart }) {
         </div>
 
         {/* Pitch sections */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           {SECTIONS.map((s, i) => (
             <div
               key={i}
               style={{
-                padding: '24px 28px',
+                padding: '22px 28px',
                 background: 'var(--bg-card)',
                 border: '1px solid var(--border)',
                 borderRadius: 10,
                 borderLeft: `3px solid ${s.color}`,
                 opacity: entered ? 1 : 0,
                 transform: entered ? 'translateY(0)' : 'translateY(16px)',
-                transition: `all 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${0.3 + i * 0.15}s`,
+                transition: `all 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${0.3 + i * 0.12}s`,
               }}
             >
               <p style={{
@@ -174,7 +186,7 @@ export default function Welcome({ onStart }) {
           marginTop: 56,
           textAlign: 'center',
           opacity: entered ? 1 : 0,
-          transition: 'opacity 1s ease 1.2s',
+          transition: 'opacity 1s ease 1.4s',
         }}>
           <button
             onClick={onStart}
